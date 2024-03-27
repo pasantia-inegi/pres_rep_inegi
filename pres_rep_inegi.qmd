@@ -1,0 +1,170 @@
+---
+# title: "Mesa de Procesamiento REP"
+# author: "Febrero 2024"
+format:
+  revealjs:
+    auto-stretch: false
+    margin: 0
+    slide-number: true
+    scrollable: true
+    preview-links: auto
+    logo: imagenes/logo_portada2.png
+    css: ine_quarto_styles.css
+    # footer: <https://quarto.org>
+---
+#
+
+<!---
+# TODO: this does not work
+.linea-superior[]
+.linea-inferior[] 
+--->
+
+<!---
+# TODO: this does not work
+![](imagenes/logo_portada2.png){.center style="width: 20%;"}   
+--->
+
+[]{.linea-superior} 
+[]{.linea-inferior} 
+
+<!---
+<img src="imagenes/logo_portada2.png" style="width: 20%"/>  
+--->
+
+<img src="imagenes/logo_portada2.png" width="20%"/>  
+
+[**REP y la explotación de RRAA para su uso estadístico a partir de un lago de datos**]{.big-par .center-justified}
+
+[**Abril 2024**]{.big-par .center-justified}
+
+<!---
+## PE Servicios Compartidos  
+--->
+
+## Temas: 
+
+::: {.incremental .medium-par}
+
+- Objetivos del Registro Estadístico de Población (REP)
+- Estrategia y procesamiento de las bases
+- Próximos pasos
+- Demo
+
+:::
+
+## Objetivos del REP
+
+::: {.incremental .medium-par}
+- El Registro Estadístico de Población (REP) busca compilar datos de la población permitiendo su **conteo, localización y caracterización demográfica básca**.
+- Se construye a partir de datos provenientes de registros administrativos (RRAA), tomando en cuenta el procesamiento necesario de dichas fuentes de información para su uso estadístico.
+- También busca complementar la información proveniente de censos y encuestas.
+:::
+
+::: notes
+- En resumen, el REP aydudará a contar y caracterizar a la población, disminuyendo los costos asociados al levantamiento de datos y también reducir las cargas de los entrevistadores e informantes, entre otros beneficios.
+:::
+
+## Estrategia y procesamiento de las bases
+
+::: {.incremental .medium-par}
+- Contamos con tres RRAA como fuentes de información:
+  - **Servicio de Registro Civil e Identificación (SRCeI)**: contiene todos los registros de personas que han sacado un documento de identificación.
+  - **Fondo Nacional de Salud (FONASA)**: contiene información sobre los beneficiarios de la salud pública.
+  - **Superintendencia de Seguridad Social (SUSESO)**: contiene el detalle de los antecedentes generales de todos los trabajadores cubiertos por la Superintencia. 
+- El acceso a RRAA nominados nos permite hacer la vinculación determinística de estas bases utilizando el RUN de las personas.
+:::
+
+::: notes
+- El Registro Civil se considera como nuestra base pivote ya que posee un compilado de todos los RUNes otorgados en el país, ya sean chilenos o extranjeros.
+- El Fondo Nacional de Salud contiene información sobre los beneficiarios de la salud pública y es la segunda base con mayor información ya que son más de 15 millones de registros por mes.
+- SUSESO es la tercera fuente de información con cerca de 9 millones de registros.
+:::
+
+## Estrategia y procesamiento de las bases
+#### Estrategia
+::: {.incremental .medium-par}
+- **Mayor desafío**: volúmen de los datos
+- **Estrategia**: Apache Arrow
+  - Es una plataforma de desarrollo para análisis en memoria.
+  - Proporciona un formato de memoria columnar estandarizado para compartir datos de manera eficiente y realizar análisis rápidos.
+  - Utiliza un enfoque agnóstico al lenguaje, lo que elimina la necesidad de convertir los datos a un formato específico para diferentes lenguajes de programación, mejorando así el rendimiento y la interoperabilidad entre sistemas y procesos de datos complejos.
+:::
+
+## Estrategia y procesamiento de las bases
+#### Procesamiento
+::: {.incremental .medium-par}
+- **Primera etapa**: exploración y cálculo de indicadores de calidad para cada una de las bases.
+- **Segunda etapa**: limpieza y procesamiento de las bases.
+- **Tercera etapa**: vinculación determinística mediante el RUT.
+- **Cuarta etapa**: integración de los registros que no hicieron match en el paso anterior.
+- **Quinta etapa**: contabilización y caracterización final de personas.
+
+:::
+
+::: notes
+- En la etapa de procesamiento se hizo una limpieza y normalización de las bases. Además se eliminaron registros duplicados y se identificaron y eliminaron los valores atípicos en la variable edad.
+:::
+
+## Próximos pasos
+::: {.incremental .medium-par}
+- Integrar más registros administrativos.
+- Desarrollo y pruebas de vinculación probabilística utilizando el paquete **SPLINK**.
+  - Paquete de Python para vinculación probabilística de registros.
+  - Permite deduplicar y vincular millones de registros.
+  - Cacula la probabilidad de que dos registros aleatorios sean iguales.
+:::
+
+. . . 
+
+::: {.incremental .medium-par layout-ncol=2 layout-valign="center"}
+
+![](imagenes/Captura.png)
+
+![](imagenes/Captura2.png)
+
+:::
+
+::: notes
+- Splink es un paquete de Python para vinculación probabilística de registros permitiendo deduplicar y vincular registros sin indentificadores únicos.
+- Lo que hace es comparar pares de registros y decidir cuáles son matches y cuáles no mediante reglas de comparación. Por ejemplo, queremos comparar todos los registros que tengan la misma fecha de nacimiento y las tres primeras letras primer nombre. Luego se calcula un score de coincidencia que es la probabilidad de que dos registros aleatorios sean iguales.
+ 
+:::
+
+## Próximos pasos
+#### Lago de datos
+::: {.incremental .medium-par}
+- **Objetivo a corto plazo**: pasar la base de datos final a MinIO y hacer consultas mediante Trino desde la tabla virtualizada
+- **MinIO** es una solución de almacenamiento de objetos que proporciona una API compatible con Amazon Web Services S3 y admite todas las funciones principales de S3.
+- **Trino** es un motor de consultas SQL diseñado para consultar grandes conjuntos de datos distribuidos en una o más fuentes de datos heterogéneas.
+:::
+
+## Demo
+
+::: {.incremental .medium-par}
+
+- Cómo agrego el link del jupyter acá?
+
+:::
+#
+
+<!---
+# TODO: this does not work
+.linea-superior[]
+.linea-inferior[] 
+--->
+
+<!---
+# TODO: this does not work
+![](imagenes/logo_portada2.png){.center style="width: 20%;"}   
+--->
+
+<img src="imagenes/logo_portada2.png" width="20%"/>  
+
+[**REP y la explotación de RRAA para su uso estadístico a partir de un lago de datos**]{.big-par .center-justified}
+
+[**Abril 2024**]{.big-par .center-justified}
+
+
+[]{.linea-superior} 
+[]{.linea-inferior} 
