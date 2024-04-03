@@ -50,15 +50,17 @@ format:
 - Estrategia y procesamiento de las bases
 - Próximos pasos
 - Demo
+- Preguntas y/o comentarios
 
 :::
 
 ## Objetivos del REP
 
 ::: {.incremental .medium-par}
-- El Registro Estadístico de Población (REP) busca compilar datos de la población permitiendo su **conteo, localización y caracterización demográfica básca**.
+- El Registro Estadístico de Población (REP) busca compilar datos de la población permitiendo su **conteo, localización y caracterización demográfica básica**.
 - Se construye a partir de datos provenientes de registros administrativos (RRAA), tomando en cuenta el procesamiento necesario de dichas fuentes de información para su uso estadístico.
-- También busca complementar la información proveniente de censos y encuestas.
+- Busca complementar la información proveniente de censos y encuestas.
+- En el largo plazo, el objetivo es reemplazar al censo
 :::
 
 ::: notes
@@ -89,22 +91,81 @@ format:
   - Es una plataforma de desarrollo para análisis en memoria.
   - Proporciona un formato de memoria columnar estandarizado para compartir datos de manera eficiente y realizar análisis rápidos.
   - Utiliza un enfoque agnóstico al lenguaje, lo que elimina la necesidad de convertir los datos a un formato específico para diferentes lenguajes de programación, mejorando así el rendimiento y la interoperabilidad entre sistemas y procesos de datos complejos.
-- **Limitaciones**: escasa variedad de funciones disponibles para usar en R.
+- **Limitaciones**: 
+  - Escasa variedad de funciones disponibles para usar en R.
+  - Computacionalmente sigue siendo muy costoso.
+:::
+
+::: notes
+- Muchas veces tenemos que ponernos creativos para realizar las operaciones que queremos cuando no encontramos funciones que sean compatibles con Arrow, lo que hace que tengamos que agregar pasos adicionales para procesar las bases.
+- También, nos hemos dado cuenta que computacionalmente sigue siendo bastante costoso correr todo el flujo de procesamiento por lo que estamos buscando alternativas a esta estrategia.
+:::
+
+## Estrategia y procesamiento de las bases
+::: {.incremental .medium-par}
+- Trabajar con fechas hace que el procesamiento sea más lento
+:::
+. . .
+
+```{r}
+#| eval: FALSE
+#| echo: TRUE
+data <- data %>% mutate(fecha_nac_corregida = paste0(anio_nacimiento,"-",mes_nacimiento2,"-",dia_nacimiento2),
+                          fecha_nac_corregida = ymd(fecha_nac_corregida),
+                          fecha_def_corregida = paste0(anio_defuncion,"-",mes_defuncion,"-",dia_defuncion),
+                          fecha_def_corregida = ymd(fecha_def_corregida)) %>% 
+    compute()
+
+```
+
+::: {.incremental .medium-par}
+- Verse obligados a trear los datos a R
+:::
+
+. . .
+
+```{r}
+#| eval: FALSE
+#| echo: TRUE
+
+iqr <- arrow_table %>%
+    summarise(iqr = IQR(edad, 0.75, na.rm = T)) %>%
+    collect()
+    
+```
+
+::: notes
+- Acá tenemos algunos ejemplos de códigos que demoran en correr
+- En el primer ejemplo estamos re construyendo la variable fecha de nacimiento, luego de haber corregido el día, el mes y el año de nacimiento. Esta variable la tenemos que convertir en formato fecha. En general, todas las operaciones que involucren fechas demoran más de lo normal.
+- En el segundo ejemplo tenemos que traer los datos a R porque la función IQR que calcula el rango intercuantilico no está disponible en Arrow. Esto también genera que el procesamiento sea más lento
 :::
 
 ## Estrategia y procesamiento de las bases
 #### Procesamiento
 ::: {.incremental .medium-par}
 - **Primera etapa**: exploración y cálculo de indicadores de calidad para cada una de las bases.
+  - Tasa de completitud
+  - Tasa de valores atípicos
+  - Proporción de registros duplicados
+  - Validaciones del RUT
 - **Segunda etapa**: limpieza y procesamiento de las bases.
 - **Tercera etapa**: vinculación determinística mediante el RUT.
+  - 96,3% de los registros de SUSESO hicieron match.
+  - 95,1% de los registros en FONASA hicieron match.
+  - 70% de los registros que hicieron match comparten el nombre con el Registro Civil.
 - **Cuarta etapa**: integración de los registros que no hicieron match en el paso anterior.
 - **Quinta etapa**: contabilización y caracterización final de personas.
 
 :::
 
 ::: notes
-- En la etapa de procesamiento se hizo una limpieza y normalización de las bases. Además se eliminaron registros duplicados y se identificaron y eliminaron los valores atípicos en la variable edad.
+- Actualmente tenemos las bases en un server de SQL y hacemos las consultas para traerlas y trabajar con ellas mediante R usando Arrow y Targets
+- El primer paso fue una exploración y cálculo de indicadores de calidad de las bases. En este paso se calcuron las tasas de completitud de las variables, que es la proporción de celdas con datos sobre el total de celdas, la tasa de valores atípicos, en este caso se encontraron valores atípicos en la variable edad, proporción de registros duplicados, que en el caso de FONASA y del Registro Civil fueron tasas cercanas a ceros y validaciones en el RUT, donde verificamos que el dígito verificador sea el que corresponde y que el largo del rut este dentro de un largo aceptable.
+- En la etapa de procesamiento se hizo una limpieza y normalización de las bases. Se eliminaron los runes inválidos, los registros duplicados, y los datos atípicos, entre otras modificaciones
+- En la tercera etapa se realiza la vinculación determinística usando el RUT. Para esto se uso la base del Registro Civil como base pivote y se realizó el merge con FONASA y SUSESO. El resultado fue un match parcial, es decir, existen registros dentro de SUSESO y FONASA para los cuales no se encontró un pareo en la tabla pivote del Registro Civil
+- Hasta el momento el RUT ha demostrado ser una buena variable para vincular personas. Cerca del 70% de los registros que hacen match comparten el mismo nombre con las otras bases. Esto es un aproximación a nuestros verdaderos postivos, lo cual es un buen punto de partida.
+- En la cuarta etapa, se integraron todos los registros que no hicieron match en el paso anterior, es decir, se sumaron a la base final.
+- Quedamos con una tabla con más de 22 millones de registros y diferentes variables sociodemográficas.
 :::
 
 ## Próximos pasos
@@ -129,6 +190,7 @@ format:
 ::: notes
 - Splink es un paquete de Python para vinculación probabilística de registros permitiendo deduplicar y vincular registros sin indentificadores únicos.
 - Lo que hace es comparar pares de registros y decidir cuáles son matches y cuáles no mediante reglas de comparación. Por ejemplo, queremos comparar todos los registros que tengan la misma fecha de nacimiento y las tres primeras letras primer nombre. Luego se calcula un score de coincidencia que es la probabilidad de que dos registros aleatorios sean iguales.
+- Para nosotros esta es una solución para deduplicar a personas que pueden ser las mismas pero tienen un RUT distinto por diversas razones. Por ejemplo, en FONASA a las personas que se atienden en un establecimiento de salud y que no están registradas en el Registro Civil se les da un RUT provisorio pero luego esas personas podrían registrarse en el RC y quedarán registrados con su RUT.
  
 :::
 
@@ -136,16 +198,25 @@ format:
 #### Lago de datos
 ::: {.incremental .medium-par}
 - **Objetivo a corto plazo**: pasar la base de datos final a MinIO y hacer consultas mediante Trino desde la tabla virtualizada
-- **MinIO** es una solución de almacenamiento de objetos que proporciona una API compatible con Amazon Web Services S3 y admite todas las funciones principales de S3.
-- **Trino** es un motor de consultas SQL diseñado para consultar grandes conjuntos de datos distribuidos en una o más fuentes de datos heterogéneas.
 :::
 
-## Demo usando Minio/Trinio
+![](imagenes/flujo.PNG)
+
+::: notes
+- La idea es traspasar todas las bases brutas a Minio, luego mediante Trino traer las bases y hacer el procesamiento mediante R o Python. El próximo paso es traspasar esa base final nuevamente al lago de datos usando Trino y finalmente hacer diversos análisis usando Superset u alguna otra herramienta de análisis.
+:::
+
+
+## Demo usando Minio/Trino
 
 ::: {.incremental .medium-par}
 
 
 :::
+
+## Preguntas y/o comentarios
+![](imagenes/flujo.PNG)
+
 #
 
 <!---
