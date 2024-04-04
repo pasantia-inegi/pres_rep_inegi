@@ -592,7 +592,7 @@
 <ul>
 <li>Actualmente tenemos las bases en un server de SQL y hacemos las consultas para traerlas y trabajar con ellas mediante R usando Arrow y Targets</li>
 <li>El primer paso fue una exploración y cálculo de indicadores de calidad de las bases. En este paso se calcuron las tasas de completitud de las variables, que es la proporción de celdas con datos sobre el total de celdas, la tasa de valores atípicos, en este caso se encontraron valores atípicos en la variable edad, proporción de registros duplicados, que en el caso de FONASA y del Registro Civil fueron tasas cercanas a ceros y validaciones en el RUT, donde verificamos que el dígito verificador sea el que corresponde y que el largo del rut este dentro de un largo aceptable.</li>
-<li>En la etapa de procesamiento se hizo una limpieza y normalización de las bases. Se eliminaron los runes inválidos, los registros duplicados, y los datos atípicos, entre otras modificaciones</li>
+<li>En la etapa de procesamiento se hizo una limpieza y normalización de las bases. Se eliminaron los runes inválidos identificados en el paso anterior, los registros duplicados, y los valores atípicos de la variable edad, entre otras modificaciones</li>
 <li>En la tercera etapa se realiza la vinculación determinística usando el RUT. Para esto se uso la base del Registro Civil como base pivote y se realizó el merge con FONASA y SUSESO. El resultado fue un match parcial, es decir, existen registros dentro de SUSESO y FONASA para los cuales no se encontró un pareo en la tabla pivote del Registro Civil</li>
 <li>Hasta el momento el RUT ha demostrado ser una buena variable para vincular personas. Cerca del 70% de los registros que hacen match comparten el mismo nombre con las otras bases. Esto es un aproximación a nuestros verdaderos postivos, lo cual es un buen punto de partida.</li>
 <li>En la cuarta etapa, se integraron todos los registros que no hicieron match en el paso anterior, es decir, se sumaron a la base final.</li>
@@ -624,16 +624,10 @@
 </ul>
 </div>
 <div class="fragment">
-<div class="medium-par quarto-layout-panel">
-<div class="quarto-layout-row quarto-layout-valign-center">
-<div class="quarto-layout-cell" style="flex-basis: 50.0%;justify-content: center;">
+<p>::: {.incremental .medium-par layout-ncol=2 layout-valign=“center”}s</p>
 <p><img data-src="imagenes/Captura.png"></p>
-</div>
-<div class="quarto-layout-cell" style="flex-basis: 50.0%;justify-content: center;">
 <p><img data-src="imagenes/Captura2.png"></p>
-</div>
-</div>
-</div>
+<p>:::</p>
 <aside class="notes">
 <ul>
 <li>Splink es un paquete de Python para vinculación probabilística de registros permitiendo deduplicar y vincular registros sin indentificadores únicos.</li>
