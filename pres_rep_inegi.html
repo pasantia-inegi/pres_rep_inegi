@@ -590,13 +590,14 @@
 </div>
 <aside class="notes">
 <ul>
-<li>Actualmente tenemos las bases en un server de SQL y hacemos las consultas para traerlas y trabajar con ellas mediante R usando Arrow y Targets</li>
-<li>El primer paso fue una exploración y cálculo de indicadores de calidad de las bases. En este paso se calcuron las tasas de completitud de las variables, que es la proporción de celdas con datos sobre el total de celdas, la tasa de valores atípicos, en este caso se encontraron valores atípicos en la variable edad, proporción de registros duplicados, que en el caso de FONASA y del Registro Civil fueron tasas cercanas a ceros y validaciones en el RUT, donde verificamos que el dígito verificador sea el que corresponde y que el largo del rut este dentro de un largo aceptable.</li>
-<li>En la etapa de procesamiento se hizo una limpieza y normalización de las bases. Se eliminaron los runes inválidos identificados en el paso anterior, los registros duplicados, y los valores atípicos de la variable edad, entre otras modificaciones</li>
+<li>Actualmente las bases están en un formato de texto plano en un server de SQL y hacemos las consultas para descargarlas en formato feather y trabajar con ellas mediante R usando Arrow y Targets</li>
+<li>El primer paso fue una exploración y cálculo de indicadores de calidad de las bases. En este paso se calcuron las tasas de completitud de las variables, que es la proporción de celdas con datos sobre el total de celdas, la tasa de valores atípicos, en este caso se encontraron valores atípicos en la variable edad, proporción de registros duplicados, que en el caso de FONASA y del Registro Civil fueron tasas cercanas a cero y validaciones en el RUT, donde verificamos que el dígito verificador sea el que corresponde y que el largo del rut este dentro de un largo aceptable.</li>
+<li>En general, estos indicadores entregan resultados aceptables demostrando que las bases son fuentes de información fiables</li>
+<li>En la etapa de procesamiento se hizo una limpieza y procesamiento de las bases. Se eliminaron los runes inválidos identificados en el paso anterior, los registros duplicados, y los valores atípicos de la variable edad, entre otras modificaciones</li>
 <li>En la tercera etapa se realiza la vinculación determinística usando el RUT. Para esto se uso la base del Registro Civil como base pivote y se realizó el merge con FONASA y SUSESO. El resultado fue un match parcial, es decir, existen registros dentro de SUSESO y FONASA para los cuales no se encontró un pareo en la tabla pivote del Registro Civil</li>
 <li>Hasta el momento el RUT ha demostrado ser una buena variable para vincular personas. Cerca del 70% de los registros que hacen match comparten el mismo nombre con las otras bases. Esto es un aproximación a nuestros verdaderos postivos, lo cual es un buen punto de partida.</li>
 <li>En la cuarta etapa, se integraron todos los registros que no hicieron match en el paso anterior, es decir, se sumaron a la base final.</li>
-<li>Quedamos con una tabla con más de 22 millones de registros y diferentes variables sociodemográficas.</li>
+<li>Quedamos con una tabla con más de 22 millones de registros y diferentes variables sociodemográficas tales como el sexo, la edad, la nacionalidad, entre otras.</li>
 </ul>
 <style type="text/css">
         span.MJX_Assistive_MathML {
@@ -624,15 +625,21 @@
 </ul>
 </div>
 <div class="fragment">
-<p>::: {.incremental .medium-par layout-ncol=2 layout-valign=“center”}s</p>
-<p><img data-src="imagenes/Captura.png"></p>
-<p><img data-src="imagenes/Captura2.png"></p>
-<p>:::</p>
+<div class="medium-par quarto-layout-panel">
+<div class="quarto-layout-row quarto-layout-valign-center">
+<div class="quarto-layout-cell" style="flex-basis: 50.0%;justify-content: center;">
+<p><img data-src="imagenes/Captura.PNG"></p>
+</div>
+<div class="quarto-layout-cell" style="flex-basis: 50.0%;justify-content: center;">
+<p><img data-src="imagenes/Captura2.PNG"></p>
+</div>
+</div>
+</div>
 <aside class="notes">
 <ul>
 <li>Splink es un paquete de Python para vinculación probabilística de registros permitiendo deduplicar y vincular registros sin indentificadores únicos.</li>
 <li>Lo que hace es comparar pares de registros y decidir cuáles son matches y cuáles no mediante reglas de comparación. Por ejemplo, queremos comparar todos los registros que tengan la misma fecha de nacimiento y las tres primeras letras primer nombre. Luego se calcula un score de coincidencia que es la probabilidad de que dos registros aleatorios sean iguales.</li>
-<li>Para nosotros esta es una solución para deduplicar a personas que pueden ser las mismas pero tienen un RUT distinto por diversas razones. Por ejemplo, en FONASA a las personas que se atienden en un establecimiento de salud y que no están registradas en el Registro Civil se les da un RUT provisorio pero luego esas personas podrían registrarse en el RC y quedarán registrados con su RUT.</li>
+<li>Para nosotros esta es una solución para deduplicar a personas que pueden ser las mismas pero tienen un RUT distinto por diversas razones. Por ejemplo, en FONASA a las personas que se atienden en un establecimiento de salud y que no están registradas en el Registro Civil se les da un RUT provisorio pero luego esas personas podrían registrarse en el RC y quedarán registrados con otro RUT, generando que estas personas queden duplicadas en nuestra base.</li>
 </ul>
 <style type="text/css">
         span.MJX_Assistive_MathML {
