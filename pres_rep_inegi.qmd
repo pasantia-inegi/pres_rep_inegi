@@ -73,7 +73,7 @@ format:
 - Contamos con tres RRAA como fuentes de información:
   - **Servicio de Registro Civil e Identificación (SRCeI)**: contiene todos los registros de personas que han sacado un documento de identificación.
   - **Fondo Nacional de Salud (FONASA)**: contiene información sobre los beneficiarios de la salud pública.
-  - **Superintendencia de Seguridad Social (SUSESO)**: contiene el detalle de los antecedentes generales de todos los trabajadores cubiertos por la Superintencia. 
+  - **Superintendencia de Seguridad Social (SUSESO)**: contiene el detalle de los antecedentes generales de todos los trabajadores cubiertos por la Superintendencia 
 - El acceso a RRAA nominados nos permite hacer la vinculación determinística de estas bases utilizando el RUN de las personas.
 :::
 
