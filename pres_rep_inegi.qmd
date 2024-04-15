@@ -143,34 +143,57 @@ iqr <- arrow_table %>%
 ## Estrategia y procesamiento de las bases
 #### Procesamiento
 ::: {.incremental .medium-par}
-- **Primera etapa**: exploración y cálculo de indicadores de calidad para cada una de las bases.
+- **Primera etapa**: descarga
+- **Segunda etapa**: exploración y cálculo de indicadores de calidad.
   - Tasa de completitud
   - Tasa de valores atípicos
   - Proporción de registros duplicados
   - Validaciones del RUT
-- **Segunda etapa**: limpieza y procesamiento de las bases.
-- **Tercera etapa**: vinculación determinística mediante el RUT.
-  - 96,3% de los registros de SUSESO hicieron match.
-  - 95,1% de los registros en FONASA hicieron match.
-  - 70% de los registros que hicieron match comparten el nombre con el Registro Civil.
-- **Cuarta etapa**: integración de los registros que no hicieron match en el paso anterior.
-- **Quinta etapa**: contabilización y caracterización final de personas.
+- **Tercera etapa**: limpieza y procesamiento de las bases.
+  - Corrección de fechas.
+  - Homologación de variables.
+  - Normalización de nombres.
+  - Remover valores atípicos y runes inválidos.
+  - Deduplicación
 :::
 
 ::: notes
-- Actualmente las bases están en un formato de texto plano en un server de SQL y hacemos las consultas para descargarlas en formato feather y trabajar con ellas mediante R usando Arrow y Targets
-- El primer paso fue una exploración y cálculo de indicadores de calidad de las bases. En este paso se calcuron las tasas de completitud de las variables, que es la proporción de celdas con datos sobre el total de celdas, la tasa de valores atípicos, en este caso se encontraron valores atípicos en la variable edad, proporción de registros duplicados, que en el caso de FONASA y del Registro Civil fueron tasas cercanas a cero y validaciones en el RUT, donde verificamos que el dígito verificador sea el que corresponde y que el largo del rut este dentro de un largo aceptable.
-- En general, estos indicadores entregan resultados aceptables demostrando que las bases son fuentes de información fiables
-- En la etapa de procesamiento se hizo una limpieza y procesamiento de las bases. Se eliminaron los runes inválidos identificados en el paso anterior, los registros duplicados, y los valores atípicos de la variable edad, entre otras modificaciones
-- En la tercera etapa se realiza la vinculación determinística usando el RUT. Para esto se uso la base del Registro Civil como base pivote y se realizó el merge con FONASA y SUSESO. El resultado fue un match parcial, es decir, existen registros dentro de SUSESO y FONASA para los cuales no se encontró un pareo en la tabla pivote del Registro Civil
+- Descarga: actualmente las bases están en un formato de texto plano en un server de SQL y hacemos las consultas para descargarlas en formato feather y trabajar con ellas mediante R usando Arrow y Targets
+- La segunda etapa corresponde a la exploración y cálculo de indicadores de calidad. Con respecto a los indicadores de calidad tenemos:
+  - La tasa de completitud que corresponde a la proporción de celdas con datos sobre el total de celdas y nos indica qué tan completa es la información recopilada.
+  - La tasa de valores atípicos donde nos enfocamos principalmente en la variable "edad". Acá establecimos un umbral para detectar estos casos y en el RC se encontraron cerca de un 4% de regustros por sobre este umbral.
+  - Proporción de registros duplicados. En el caso de FONASA y el RC se encontraron tasas muy cercanas al 0% lo cual es un buen indicador.
+  - Validaciones del RUT. Acá comprobamos que el número de caracteres de los RUNES estén dentro del largo aceptable y que el dígito verificador sea el que corresponde
+- La tercera etapa consitió en la limpieza y el procesamiento de las bases:
+  - Corrección de fechas
+  - Homologación de variables
+  - Normalización de nombres
+  - Remover valores atípicos [hacemos el supuesto de que las personas por sobre el umbral de la variable edad son personas fallecidas] y runes inválidos.
+  - Deduplicación [por el momento se hace eligiendo un registro de manera aleatoria. más adelantes haremos pruebas usando el paquete SPLINK que mencionaré más adelante]
+:::
+
+## Estrategia y procesamiento de las bases
+#### Procesamiento
+::: {.incremental .medium-par}
+- **Cuarta etapa**: vinculación determinística mediante el RUT.
+  - 96,3% de los registros de SUSESO hicieron match.
+  - 95,1% de los registros en FONASA hicieron match.
+  - 70% de los registros que hicieron match comparten el nombre con el Registro Civil.
+- **Quinta etapa**: integración de los registros que no hicieron match en el paso anterior.
+- **Sexta etapa**: contabilización y caracterización final de personas.
+:::
+
+::: notes
+- En la cuarta etapa se realiza la vinculación determinística usando el RUT. Para esto se uso el Registro Civil como base pivote y se realizó el merge con FONASA y SUSESO. El resultado fue un match parcial, es decir, existen registros dentro de SUSESO y FONASA para los cuales no se encontró un pareo en la tabla pivote del Registro Civil
 - Hasta el momento el RUT ha demostrado ser una buena variable para vincular personas. Cerca del 70% de los registros que hacen match comparten el mismo nombre con las otras bases. Esto es un aproximación a nuestros verdaderos postivos, lo cual es un buen punto de partida.
-- En la cuarta etapa, se integraron todos los registros que no hicieron match en el paso anterior, es decir, se sumaron a la base final.
-- Quedamos con una tabla con más de 22 millones de registros y diferentes variables sociodemográficas tales como el sexo, la edad, la nacionalidad, entre otras.
+- En la quinta etapa, se integraron todos los registros que no hicieron match en el paso anterior, es decir, se sumaron a la base final.
+- Finalmente, la sexta etapa corresponde a la contabilización y caracterización final de personas, donde quedamos con una tabla con más de 22 millones de registros y diferentes variables sociodemográficas tales como el sexo, la edad, la nacionalidad, entre otras.
 :::
 
 ## Próximos pasos
 ::: {.incremental .medium-par}
 - Integrar más registros administrativos.
+- Perfeccionar la identificación de a quienes sumar y a quienes restar (por ejemplo identificación de residentes usando señales de vida). 
 - Desarrollo y pruebas de vinculación probabilística utilizando el paquete **SPLINK**.
   - Paquete de Python para vinculación probabilística de registros.
   - Permite deduplicar y vincular millones de registros.
@@ -188,10 +211,13 @@ iqr <- arrow_table %>%
 :::
 
 ::: notes
-- Splink es un paquete de Python para vinculación probabilística de registros permitiendo deduplicar y vincular registros sin indentificadores únicos.
-- Lo que hace es comparar pares de registros y decidir cuáles son matches y cuáles no mediante reglas de comparación. Por ejemplo, queremos comparar todos los registros que tengan la misma fecha de nacimiento y las tres primeras letras primer nombre. Luego se calcula un score de coincidencia que es la probabilidad de que dos registros aleatorios sean iguales.
-- Para nosotros esta es una solución para deduplicar a personas que pueden ser las mismas pero tienen un RUT distinto por diversas razones. Por ejemplo, en FONASA a las personas que se atienden en un establecimiento de salud y que no están registradas en el Registro Civil se les da un RUT provisorio pero luego esas personas podrían registrarse en el RC y quedarán registrados con otro RUT, generando que estas personas queden duplicadas en nuestra base.
- 
+- Integrar más RRAA al procesamiento
+- Perfeccionar la identificación de a quienes sumar y a quienes restar (por ejemplo identificación de residentes usando señales de vida). [Consideramos como señal de vida la aparición continua de una persona en las diferentes bases]
+- Desarrollo y pruebas de vinculación probabilística utilizando el paquete SPLINK:
+  - Splink es un paquete de Python para vinculación probabilística que permite deduplicar y vincular millones de registros incluso sin un id único de persona.
+  - Lo que hace es comparar pares de registros y decidir cuáles son matches y cuáles no mediante reglas de comparación. Por ejemplo, queremos comparar todos los     registros que tengan la misma fecha de nacimiento y las tres primeras letras primer nombre. Luego de hacer la comparación se calcula un score de coincidencia que
+  es un predicción para determinar si dos registros son o no la misma persona, aplicando pesos a las variables. Por ejemplo, el sexo puede entregar menos información que la fecha de nacimiento.
+  - Para nosotros esta es una solución para deduplicar a personas que pueden ser las mismas pero tienen un RUT distinto por diversas razones. Por ejemplo, en FONASA a las personas que se atienden en un establecimiento de salud y que no están registradas en el Registro Civil se les da un RUT provisorio pero luego esas personas podrían registrarse en el RC y quedarán registrados con otro RUT, generando que estas personas queden duplicadas en nuestra base.
 :::
 
 ## Próximos pasos
