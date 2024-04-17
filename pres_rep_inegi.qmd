@@ -97,48 +97,49 @@ format:
 :::
 
 ::: notes
+- A veces queremos realizar una operación que no ocupa más de una línea de código, sin embargo, si esa función no es comptabible con R tenemos que agregar pasos adicionales al procesamiento.
 - Muchas veces tenemos que ponernos creativos para realizar las operaciones que queremos cuando no encontramos funciones que sean compatibles con Arrow, lo que hace que tengamos que agregar pasos adicionales para procesar las bases.
 - También, nos hemos dado cuenta que computacionalmente sigue siendo bastante costoso correr todo el flujo de procesamiento por lo que estamos buscando alternativas a esta estrategia.
 :::
 
-## Estrategia y procesamiento de las bases
-::: {.incremental .medium-par}
-- Trabajar con fechas hace que el procesamiento sea más lento
-:::
-. . .
+<!-- ## Estrategia y procesamiento de las bases -->
+<!-- ::: {.incremental .medium-par} -->
+<!-- - Trabajar con fechas hace que el procesamiento sea más lento -->
+<!-- ::: -->
+<!-- . . . -->
 
-```{r}
-#| eval: FALSE
-#| echo: TRUE
-data <- data %>% mutate(fecha_nac_corregida = paste0(anio_nacimiento,"-",mes_nacimiento2,"-",dia_nacimiento2),
-                          fecha_nac_corregida = ymd(fecha_nac_corregida),
-                          fecha_def_corregida = paste0(anio_defuncion,"-",mes_defuncion,"-",dia_defuncion),
-                          fecha_def_corregida = ymd(fecha_def_corregida)) %>% 
-    compute()
+<!-- ```{r} -->
+<!-- #| eval: FALSE -->
+<!-- #| echo: TRUE -->
+<!-- data <- data %>% mutate(fecha_nac_corregida = paste0(anio_nacimiento,"-",mes_nacimiento2,"-",dia_nacimiento2), -->
+<!--                           fecha_nac_corregida = ymd(fecha_nac_corregida), -->
+<!--                           fecha_def_corregida = paste0(anio_defuncion,"-",mes_defuncion,"-",dia_defuncion), -->
+<!--                           fecha_def_corregida = ymd(fecha_def_corregida)) %>%  -->
+<!--     compute() -->
 
-```
+<!-- ``` -->
 
-::: {.incremental .medium-par}
-- Verse obligados a trear los datos a R
-:::
+<!-- ::: {.incremental .medium-par} -->
+<!-- - Verse obligados a trear los datos a R -->
+<!-- ::: -->
 
-. . .
+<!-- . . . -->
 
-```{r}
-#| eval: FALSE
-#| echo: TRUE
+<!-- ```{r} -->
+<!-- #| eval: FALSE -->
+<!-- #| echo: TRUE -->
 
-iqr <- arrow_table %>%
-    summarise(iqr = IQR(edad, 0.75, na.rm = T)) %>%
-    collect()
-    
-```
+<!-- iqr <- arrow_table %>% -->
+<!--     summarise(iqr = IQR(edad, 0.75, na.rm = T)) %>% -->
+<!--     collect() -->
 
-::: notes
-- Acá tenemos algunos ejemplos de códigos que demoran en correr
-- En el primer ejemplo estamos re construyendo la variable fecha de nacimiento, luego de haber corregido el día, el mes y el año de nacimiento. Esta variable la tenemos que convertir en formato fecha. En general, todas las operaciones que involucren fechas demoran más de lo normal.
-- En el segundo ejemplo tenemos que traer los datos a R porque la función IQR que calcula el rango intercuantilico no está disponible en Arrow. Esto también genera que el procesamiento sea más lento
-:::
+<!-- ``` -->
+
+<!-- ::: notes -->
+<!-- - Acá tenemos algunos ejemplos de códigos que demoran en correr -->
+<!-- - En el primer ejemplo estamos re construyendo la variable fecha de nacimiento, luego de haber corregido el día, el mes y el año de nacimiento. Esta variable la tenemos que convertir en formato fecha. En general, todas las operaciones que involucren fechas demoran más de lo normal. -->
+<!-- - En el segundo ejemplo tenemos que traer los datos a R porque la función IQR que calcula el rango intercuantilico no está disponible en Arrow. Esto también genera que el procesamiento sea más lento -->
+<!-- ::: -->
 
 ## Estrategia y procesamiento de las bases
 #### Procesamiento
